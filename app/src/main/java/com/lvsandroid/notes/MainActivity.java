@@ -8,18 +8,26 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
-
-    SharedPreferences sharedPreferences;
     Intent intent;
-    ArrayList<String> notes = new ArrayList<>();
+    ListView notesListView;
+    SharedPreferences sharedPreferences;
+    public static ArrayAdapter notesAdapter;
+    public static ArrayList<String> lstNotes = new ArrayList<>();
+    public static Set<String> setNotes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,20 +36,49 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-
-
-
         init();
+    }
 
-
+    private void getSPData() {
+        // SharedPreferences
+        String packageName = getApplicationContext().getPackageName();
+        sharedPreferences = this.getSharedPreferences(packageName, Context.MODE_PRIVATE);
+        setNotes = sharedPreferences.getStringSet("notes",null);
     }
 
     private void init() {
-        String packageName = getApplicationContext().getPackageName();
-        sharedPreferences = this.getSharedPreferences(packageName, Context.MODE_PRIVATE);
+        getSPData();
 
+        lstNotes.clear();
+
+        if(setNotes != null) {
+            lstNotes.clear();
+            lstNotes.addAll(setNotes);
+        } else {
+            lstNotes.add("Example note");
+            setNotes = new HashSet<>();
+            setNotes.addAll(lstNotes);
+            sharedPreferences.edit().putStringSet("notes",setNotes).apply();
+        }
+
+        // Intent
         intent = new Intent(getApplicationContext(),EditNote.class);
+
+        // List
+        notesListView = (ListView)findViewById(R.id.lstNotes);
+
+        notesAdapter = new ArrayAdapter<>(this,android.R.layout.simple_list_item_1,lstNotes);
+        notesListView.setAdapter(notesAdapter);
+
+        // Events
+        notesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                intent = new Intent(getApplicationContext(),EditNote.class);
+                intent.putExtra("tappedNote",position);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override

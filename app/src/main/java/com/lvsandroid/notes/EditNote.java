@@ -14,10 +14,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class EditNote extends AppCompatActivity {
+
+    Intent intent;
+    int noteIdx = -1;
+    EditText noteText;
+    SharedPreferences sharedPreferences;
+    static Set<String> setNotes;
+    static ArrayList<String> lstNotes = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,17 +36,34 @@ public class EditNote extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        intent = getIntent();
+        noteIdx = intent.getIntExtra("tappedNote",-1);
+        if(noteIdx != -1) {
+            noteText = (EditText)findViewById(R.id.editText);
+            noteText.setText(MainActivity.lstNotes.get(noteIdx));
+        }
+    }
+
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+        Log.i("aaa", "onTextChanged " + s);
     }
 
     private void saveNote() {
-        String packageName = getApplicationContext().getPackageName();
         EditText noteText = (EditText)findViewById(R.id.editText);
         String note = noteText.getText().toString();
-        SharedPreferences spNote = this.getSharedPreferences(packageName, Context.MODE_PRIVATE);
-        spNote.edit().putString("note",note).apply();
 
-        Intent i = getIntent();
-        i.putExtra("note",note);
+        if(note.trim() != "") {
+            MainActivity.lstNotes.add(note);
+            MainActivity.notesAdapter.notifyDataSetChanged();
+            //intent.putExtra("notes", note);
+
+            lstNotes.add(note);
+            setNotes = new HashSet<>();
+            setNotes.addAll(lstNotes);
+            String packageName = getApplicationContext().getPackageName();
+            sharedPreferences = this.getSharedPreferences(packageName, Context.MODE_PRIVATE);
+            sharedPreferences.edit().putStringSet("notes",setNotes).apply();
+        }
     }
 
     @Override
@@ -51,5 +77,7 @@ public class EditNote extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
+
 
 }
